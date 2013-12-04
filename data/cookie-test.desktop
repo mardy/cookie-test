@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=cookie-test
+Comment=My project description
+Exec=/usr/bin/qmlscene $@ /usr/share/cookie-test/cookie-test.qml
+Icon=qmlscene
+Terminal=false
+Type=Application
+X-Ubuntu-Touch=true

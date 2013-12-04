@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>qml/cookie-test.qml</file>
+    <file>qml/WebPage.qml</file>
+</qresource>
+</RCC>

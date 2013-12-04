@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service id="facebook-webapp">
+  <type>webapps</type>
+  <name>Facebook Webapp</name>
+  <provider>facebook</provider>
+</service>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<application id="cookie-test">
+  <description>Cookie test</description>
+
+  <service-types>
+    <service-type id="webapps">
+      <description>Use the service in a webapp</description>
+    </service-type>
+  </service-types>
+
+</application>
