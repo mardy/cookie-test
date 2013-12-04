@@ -82,7 +82,7 @@ MainView {
         console.log("Getting cookies for " + id)
         fileOps.copyFile(fileOps.homeDir + "/.cache/signon-ui//id-" +
         id + "/.local/share/browser-process/.QtWebKit/cookies.db",
-        "/tmp/cookies.db")
+        fileOps.homeDir + "/.local/share/cookie-test/.QtWebKit/cookies.db")
         pageStack.push(Qt.resolvedUrl("WebPage.qml"))
     }
 }
