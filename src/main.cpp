@@ -18,13 +18,21 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusMetaType>
 #include <QDebug>
 #include <QDir>
-#include <QFile>
-#include <QFileInfo>
 #include <QGuiApplication>
+#include <QMap>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QQmlContext>
 #include <QQuickView>
+
+typedef QMap<QString,QString> RawCookies;
+
+Q_DECLARE_METATYPE(RawCookies)
 
 class FileOps: public QObject
 {
@@ -32,25 +40,72 @@ class FileOps: public QObject
     Q_PROPERTY(QString homeDir READ homeDir CONSTANT)
 
 public:
-    FileOps(QObject *parent = 0): QObject(parent) {}
+    FileOps(QObject *parent = 0);
     ~FileOps() {};
 
     QString homeDir() const;
 
-    Q_INVOKABLE void copyFile(const QString &source, const QString &dest) const;
+    Q_INVOKABLE void copyCookies(quint32 id, const QString &dest) const;
+
+private:
+    QDBusConnection m_conn;
 };
+
+FileOps::FileOps(QObject *parent):
+    QObject(parent),
+    m_conn(QDBusConnection::sessionBus())
+{
+    qRegisterMetaType<RawCookies>("RawCookies");
+    qDBusRegisterMetaType<RawCookies>();
+}
 
 QString FileOps::homeDir() const
 {
     return QDir::homePath();
 }
 
-void FileOps::copyFile(const QString &source, const QString &dest) const
+void FileOps::copyCookies(quint32 id, const QString &dest) const
 {
-    qDebug() << Q_FUNC_INFO << source << dest;
-    QFileInfo info(dest);
-    info.dir().mkpath(".");
-    QFile::copy(source, dest);
+    qDebug() << Q_FUNC_INFO << id << dest;
+
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(dest);
+    if (!db.open()) {
+        qWarning() << "Could not open DB";
+        return;
+    }
+
+    /* reset existing DB */
+    QSqlQuery q(db);
+    q.exec("DELETE FROM cookies;");
+
+    /* Get the cookies from the identity */
+    QDBusMessage message =
+        QDBusMessage::createMethodCall("com.nokia.singlesignonui",
+                                       "/SignonUi",
+                                       "com.nokia.singlesignonui",
+                                       "cookiesForIdentity");
+    message.setArguments(QVariantList() << id);
+    QDBusMessage reply = m_conn.call(message);
+    qDebug() << "Got DBus reply" << reply;
+    if (reply.type() == QDBusMessage::ErrorMessage) {
+        qWarning() << "Got error:" << reply.errorMessage();
+        return;
+    }
+
+    RawCookies cookies = qdbus_cast<RawCookies>(reply.arguments()[0]);
+    qDebug() << "Cookies:" << cookies;
+    q.prepare("INSERT INTO cookies (cookieId, cookie) "
+              "VALUES (:cookieId, :cookie)");
+    for (RawCookies::const_iterator i = cookies.constBegin();
+         i != cookies.constEnd();
+         i++) {
+        q.bindValue(":cookieId", i.key());
+        q.bindValue(":cookie", i.value());
+        if (!q.exec()) {
+            qWarning() << "Couldn't insert cookie into DB" << i.key();
+        }
+    }
 }
 
 int main(int argc, char **argv)

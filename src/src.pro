@@ -5,7 +5,9 @@ CONFIG += \
     qt
 
 QT += \
+    dbus \
     gui \
+    sql \
     qml \
     quick
 

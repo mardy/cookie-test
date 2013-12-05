@@ -4,6 +4,9 @@ import Ubuntu.OnlineAccounts 0.1
 import Ubuntu.OnlineAccounts.Client 0.1
 
 MainView {
+    property string provider: "facebook"
+    property string url: provider === "google" ? "http://www.gmail.com" : "http://www.facebook.com"
+
     applicationName: "cookie-test"
     
     width: units.gu(100)
@@ -74,15 +77,14 @@ MainView {
 
     Setup {
         id: setup
-        providerId: "google"
+        providerId: provider
         applicationId: "cookie-test"
     }
 
     function getCookies(id) {
         console.log("Getting cookies for " + id)
-        fileOps.copyFile(fileOps.homeDir + "/.cache/signon-ui//id-" +
-        id + "/.local/share/browser-process/.QtWebKit/cookies.db",
+        fileOps.copyCookies(id,
         fileOps.homeDir + "/.local/share/cookie-test/.QtWebKit/cookies.db")
-        pageStack.push(Qt.resolvedUrl("WebPage.qml"))
+        pageStack.push(Qt.resolvedUrl("WebPage.qml"), { "url": url })
     }
 }
